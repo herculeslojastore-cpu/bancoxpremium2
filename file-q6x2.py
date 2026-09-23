@@ -1,8 +1,9 @@
+import os
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import ApplicationBuilder, CommandHandler, CallbackQueryHandler, ContextTypes
 
 # --- CONFIGURAÇÃO ---
-TOKEN = "COLE_SEU_TOKEN_AQUI"
+TOKEN = os.getenv("BOT_TOKEN")
 
 # --- DADOS DOS PRODUTOS ---
 produtos = {
