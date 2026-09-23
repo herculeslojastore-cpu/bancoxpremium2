@@ -9,19 +9,19 @@ TOKEN = os.getenv("BOT_TOKEN")
 produtos = {
     "itaum": {
         "titulo": "Itaú Consultável",
-        "descricao": "Acesso total ao App do Itaú. Saldo visível.",
+        "descricao": "Acesso total ao App do Itaú. Sem token.",
         "qtd": 10,
         "itens": [
-            {"saldo": "R$ 1.500,00", "preco": "R$ 600,00", "id": 1},
-            {"saldo": "R$ 2.000,00", "preco": "R$ 850,00", "id": 2},
-            {"saldo": "R$ 3.500,00", "preco": "R$ 1.200,00", "id": 3},
-            {"saldo": "R$ 4.000,00", "preco": "R$ 1.500,00", "id": 4},
-            {"saldo": "R$ 5.000,00", "preco": "R$ 1.800,00", "id": 5},
-            {"saldo": "R$ 6.000,00", "preco": "R$ 2.100,00", "id": 6},
-            {"saldo": "R$ 7.500,00", "preco": "R$ 2.500,00", "id": 7},
-            {"saldo": "R$ 8.200,00", "preco": "R$ 2.800,00", "id": 8},
-            {"saldo": "R$ 9.000,00", "preco": "R$ 3.100,00", "id": 9},
-            {"saldo": "R$ 10.000,00", "preco": "R$ 3.500,00", "id": 10},
+            {"saldo": "R$ 6.153,00", "preco": "R$ 600,00", "id": 1},
+            {"saldo": "R$ 12.090,00", "preco": "R$ 950,00", "id": 2},
+            {"saldo": "R$ 8.500,00", "preco": "R$ 790,00", "id": 3},
+            {"saldo": "R$ 16.627,00", "preco": "R$ 1.200,00", "id": 4},
+            {"saldo": "R$ 5.110,00", "preco": "R$ 400,00", "id": 5},
+            {"saldo": "R$ 22.900,00", "preco": "R$ 2.100,00", "id": 6},
+            {"saldo": "R$ 11.297,00", "preco": "R$ 950,00", "id": 7},
+            {"saldo": "R$ 8.968,00", "preco": "R$ 790,00", "id": 8},
+            {"saldo": "R$ 9.450,00", "preco": "R$ 810,00", "id": 9},
+            {"saldo": "R$ 10.022,00", "preco": "R$ 850,00", "id": 10},
         ]
     },
     "porto": {
@@ -29,13 +29,13 @@ produtos = {
         "descricao": "Saldo garantido (Consultado no telefone).",
         "qtd": 7,
         "itens": [
-            {"saldo": "R$ 3.000,00", "preco": "R$ 1.200,00", "id": 1},
-            {"saldo": "R$ 3.500,00", "preco": "R$ 1.400,00", "id": 2},
-            {"saldo": "R$ 4.000,00", "preco": "R$ 1.600,00", "id": 3},
-            {"saldo": "R$ 5.000,00", "preco": "R$ 2.000,00", "id": 4},
-            {"saldo": "R$ 6.000,00", "preco": "R$ 2.400,00", "id": 5},
-            {"saldo": "R$ 8.000,00", "preco": "R$ 3.200,00", "id": 6},
-            {"saldo": "R$ 10.000,00", "preco": "R$ 4.000,00", "id": 7},
+            {"saldo": "R$ 6.025,00", "preco": "R$ 350,00", "id": 1},
+            {"saldo": "R$ 8.495,00", "preco": "R$ 400,00", "id": 2},
+            {"saldo": "R$ 7.124,00", "preco": "R$ 380,00", "id": 3},
+            {"saldo": "R$ 12.075,00", "preco": "R$ 1.050,00", "id": 4},
+            {"saldo": "R$ 23.240,00", "preco": "R$ 1.520,00", "id": 5},
+            {"saldo": "R$ 2.050,00", "preco": "R$ 200,00", "id": 6},
+            {"saldo": "R$ 2.120,00", "preco": "R$ 200,00", "id": 7},
         ]
     },
     "lara": {
@@ -43,9 +43,9 @@ produtos = {
         "descricao": "Conta PJ pronta para receber via link.",
         "qtd": 21,
         "itens": [
-            {"saldo": "R$ 5.000,00", "preco": "R$ 2.000,00", "id": 1},
-            {"saldo": "R$ 10.000,00", "preco": "R$ 4.000,00", "id": 2},
-            {"saldo": "R$ 15.000,00", "preco": "R$ 6.000,00", "id": 3},
+            {"saldo": "R$ 0,00", "preco": "R$ 250,00", "id": 1},
+            {"saldo": "R$ 0,00", "preco": "R$ 250,00", "id": 2},
+            {"saldo": "R$ 0,00", "preco": "R$ 250,00", "id": 3},
             # Adicione mais itens conforme necessário
         ]
     }
@@ -98,24 +98,24 @@ async def main_menu(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if update.message:
         await update.message.reply_text(
             "🏦 **BANCO X PREMIUM**\n"
-            "Estoque exclusivo e acesso direto ao sistema. Selecione uma opção:",
+            "Estoque exclusivo e acesso direto as tecnicas corretas de virada de saldo. As nossas infos estão com proxy e cookies do titular. Selecione uma opção:",
             reply_markup=reply_markup,
             parse_mode='Markdown'
         )
     elif update.callback_query:
         await update.callback_query.edit_message_text(
             "🏦 **BANCO X PREMIUM**\n"
-            "Estoque exclusivo e acesso direto ao sistema. Selecione uma opção:",
+            "Estoque exclusivo e acesso direto as tecnicas corretas de virada de saldo. As nossas infos estão com proxy e cookies do titular. Selecione uma opção:",
             reply_markup=reply_markup,
             parse_mode='Markdown'
         )
 
 async def menu_comprar(update: Update, context: ContextTypes.DEFAULT_TYPE):
     keyboard = [
-        [InlineKeyboardButton("🏦 Itaú (10 vagas)", callback_data='menu_cat_itaum')],
-        [InlineKeyboardButton("💳 Porto (7 vagas)", callback_data='menu_cat_porto')],
-        [InlineKeyboardButton("💰 Lara (21 vagas)", callback_data='menu_cat_lara')],
-        [InlineKeyboardButton("🔐 Logins Premium (50)", callback_data='menu_cat_logins')],
+        [InlineKeyboardButton("🏦 Itaú", callback_data='menu_cat_itaum')],
+        [InlineKeyboardButton("💳 Porto", callback_data='menu_cat_porto')],
+        [InlineKeyboardButton("💰 Lara", callback_data='menu_cat_lara')],
+        [InlineKeyboardButton("🔐 Logins Premium", callback_data='menu_cat_logins')],
         [InlineKeyboardButton("🔙 Voltar ao Menu", callback_data='menu_principal')]
     ]
     reply_markup = InlineKeyboardMarkup(keyboard)
@@ -128,12 +128,12 @@ async def menu_comprar(update: Update, context: ContextTypes.DEFAULT_TYPE):
 async def menu_regras(update: Update, context: ContextTypes.DEFAULT_TYPE):
     text = (
         "📋 **REGRAS DO BANCO X PREMIUM**\n\n"
-        "1️⃣ **Estoque Limitado:** As vagas são liberadas com urgência. Quem demora, perde.\n"
+        "1️⃣ **Estoque Limitado:** Quem demora, perde.\n"
         "2️⃣ **Pagamento:** Somente via Carteira Telegram para garantia de entrega.\n"
-        "3️⃣ **Entrega:** Os dados são enviados via Telegram imediatamente após a confirmação do Pix.\n"
+        "3️⃣ **Entrega:** Os dados são enviados via Telegram imediatamente após a confirmação do pagamento.\n"
         "4️⃣ **Suporte:** Bruno está disponível 24/7 no grupo VIP.\n"
         "5️⃣ **Não reembolso:** Produtos digitais não possuem devolução.\n\n"
-        "Ao comprar, você concorda com estas regras."
+        "Ao comprar, você concorda com estas regras. Não venham definir preço, sabemos a qualidade do serviço e vamos manter"
     )
     await update.callback_query.edit_message_text(text=text, parse_mode='Markdown')
 
