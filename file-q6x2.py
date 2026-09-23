@@ -109,7 +109,7 @@ async def main_menu(update: Update, context: ContextTypes.DEFAULT_TYPE):
             reply_markup=reply_markup,
             parse_mode='Markdown'
         )
-        
+
 async def menu_comprar(update: Update, context: ContextTypes.DEFAULT_TYPE):
     keyboard = [
         [InlineKeyboardButton("🏦 Itaú (10 vagas)", callback_data='menu_cat_itaum')],
@@ -147,7 +147,7 @@ async def menu_historico(update: Update, context: ContextTypes.DEFAULT_TYPE):
         text = f"📜 **SEU HISTÓRICO DE COMPRAS**\n\n"
         for item in history:
             text += f"🔹 {item['produto']} ({item['item']}) - R$ {item['preco']}\n"
-        text += "\n*Acesse o menu Comprar para novos pedidos.*
+        text += "\n*Acesse o menu Comprar para novos pedidos.*"
     
     keyboard = [[InlineKeyboardButton("🔙 Voltar ao Menu", callback_data='menu_principal')]]
     await update.callback_query.edit_message_text(text=text, reply_markup=InlineKeyboardMarkup(keyboard), parse_mode='Markdown')
