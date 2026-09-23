@@ -5,7 +5,7 @@ from telegram.ext import ApplicationBuilder, CommandHandler, CallbackQueryHandle
 # --- CONFIGURAÇÃO ---
 TOKEN = os.getenv("BOT_TOKEN")
 
-# --- DADOS DOS PRODUTOS (EXPANDIDOS PARA ATENDER AOS PEDIDOS) ---
+# --- DADOS DOS PRODUTOS ---
 produtos = {
     "itaum": {
         "titulo": "Itaú Consultável",
@@ -46,7 +46,6 @@ produtos = {
             {"saldo": "R$ 0,00", "preco": "R$ 250,00", "id": 1},
             {"saldo": "R$ 0,00", "preco": "R$ 250,00", "id": 2},
             {"saldo": "R$ 0,00", "preco": "R$ 250,00", "id": 3},
-            # Adicione mais itens conforme necessário
         ]
     }
 }
@@ -79,8 +78,7 @@ pagamento = {
     )
 }
 
-# --- HISTÓRICO DE COMPRAS (DICIONÁRIO EM MEMÓRIA) ---
-# Estrutura: { user_id: [ {produto: ..., item: ..., id: ...}, ... ] }
+# --- HISTÓRICO DE COMPRAS ---
 user_history = {}
 
 # --- FUNÇÕES ---
@@ -94,7 +92,7 @@ async def main_menu(update: Update, context: ContextTypes.DEFAULT_TYPE):
     ]
     reply_markup = InlineKeyboardMarkup(keyboard)
     
-    # Ajuste aqui: Se for /start (mensagem normal), usa reply_text. Se for botão, usa edit_message_text.
+    # Se for /start (mensagem normal), usa reply_text. Se for botão, usa edit_message_text.
     if update.message:
         await update.message.reply_text(
             "🏦 **BANCO X PREMIUM**\n"
@@ -155,103 +153,34 @@ async def menu_historico(update: Update, context: ContextTypes.DEFAULT_TYPE):
 async def menu_suporte(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.callback_query.edit_message_text("👤 **SOLICITAR SUPORTE**\n\nBruno está no grupo VIP.\nEntre no grupo agora mesmo para ser atendido.")
 
-# --- LÓGICA DE PRODUTOS (PAGINAÇÃO) ---
+# --- LÓGICA DE PRODUTOS (PAGINAÇÃO E LISTAS) ---
 
-async def show_cat_produtos(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    query = update.callback_query
-    cat = query.data.split('_')[2] # itaum, porto, lara
-    
+async def show_cat_produtos(update: Update, context: ContextTypes.DEFAULT_TYPE, cat: str):
+    """Mostra a lista de produtos da categoria selecionada"""
     p = produtos[cat]
     text = f"🏦 **{p['titulo']}** ({p['qtd']} vagas)\n*{p['descricao']}*\n\n"
     
     keyboard = [
         [InlineKeyboardButton("🔙 Voltar para Comprar", callback_data='menu_comprar')]
     ]
-    await query.edit_message_text(text=text, reply_markup=InlineKeyboardMarkup(keyboard), parse_mode='Markdown')
-
-async def show_prod_item(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    query = update.callback_query
-    cat = query.data.split('_')[2]
-    page = int(query.data.split('_')[3])
     
-    p = produtos[cat]
-    items = p['itens']
-    items_per_page = 2
-    total_pages = (len(items) + items_per_page - 1) // items_per_page
+    # Lista todos os itens disponíveis na categoria
+    for item in p['itens']:
+        text += f"🔹 Saldo: **{item['saldo']}** - R$ {item['preco']}\n"
+        # Cria botão de comprar para cada item
+        keyboard[0].append(InlineKeyboardButton(f"🛒 Comprar {item['saldo']}", callback_data=f'buy_{cat}_{item["id"]}'))
     
-    start_idx = (page - 1) * items_per_page
-    end_idx = start_idx + items_per_page
-    current_items = items[start_idx:end_idx]
-    
-    text = f"🏦 **{p['titulo']}** - Página {page}/{total_pages}\n\n"
-    
-    for item in current_items:
-        text += f"🔹 Saldo: **{item['saldo']}**\n"
-        text += f"🔸 Preço: **{item['preco']}**\n"
-        text += f"🔒 ID: {item['id']}\n\n"
-        
-        # Botão de Comprar na lista
-        text += f"🛒 [Comprar {item['saldo']}]({query.url})" # Nota: query.url não funciona em callback, vamos usar botão
-    
-    keyboard = [
-        [InlineKeyboardButton("🔙 Voltar para Comprar", callback_data='menu_comprar')]
-    ]
-    
-    # Adicionar Navegação
-    if page > 1:
-        keyboard[0].append(InlineKeyboardButton("⬅️ Anterior", callback_data=f'page_{cat}_{page-1}'))
-    if page < total_pages:
-        keyboard[0].append(InlineKeyboardButton("Próximo ➡️", callback_data=f'page_{cat}_{page+1}'))
-        
-    reply_markup = InlineKeyboardMarkup(keyboard)
-    await query.edit_message_text(text=text, reply_markup=reply_markup, parse_mode='Markdown')
-
-async def buy_item(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    query = update.callback_query
-    cat = query.data.split('_')[2]
-    item_id = int(query.data.split('_')[3])
-    
-    p = produtos[cat]
-    item = next((i for i in p['itens'] if i['id'] == item_id), None)
-    
-    if item:
-        # Adiciona ao histórico
-        user_id = query.from_user.id
-        if user_id not in user_history: user_history[user_id] = []
-        user_history[user_id].append({
-            'produto': p['titulo'],
-            'item': item['saldo'],
-            'preco': item['preco'],
-            'id': item['id']
-        })
-        
-        text = (
-            f"✅ **PEDIDO CONFIRMADO!**\n\n"
-            f"Você comprou o **{p['titulo']}** com saldo de **{item['saldo']}**.\n"
-            f"Preço: R$ {item['preco']}\n\n"
-            f"👉 **AGORA PAGUE PELO TELEGRAM:**\n"
-        )
-        
-        keyboard = [
-            [InlineKeyboardButton("💰 Ver Pagamento", callback_data='menu_pagamento')],
-            [InlineKeyboardButton("🔙 Menu Principal", callback_data='menu_principal')]
-        ]
-        
-        await query.edit_message_text(text=text, reply_markup=InlineKeyboardMarkup(keyboard), parse_mode='Markdown')
-
-# --- LÓGICA DE LOGINS (TODOS BOTÕES) ---
+    await update.callback_query.edit_message_text(text=text, reply_markup=InlineKeyboardMarkup(keyboard), parse_mode='Markdown')
 
 async def show_logins_list(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    text = "🔐 **LOGINS PREMIUM (50 Vagas)**\n*Escolha a loja/loja que você quer comprar*\n\n"
+    text = "🔐 **LOGINS PREMIUM (50 Vagas)**\n*Escolha a loja que você quer comprar*\n\n"
     
     keyboard = []
     row = []
-    count = 0
     
     for cat, lojas in logins.items():
         for loja in lojas:
             row.append(InlineKeyboardButton(f"🔹 {loja}", callback_data=f'buy_login_{loja}'))
-            count += 1
             
             if len(row) == 3: # 3 botões por linha
                 keyboard.append(row)
@@ -262,30 +191,6 @@ async def show_logins_list(update: Update, context: ContextTypes.DEFAULT_TYPE):
     keyboard.append([InlineKeyboardButton("🔙 Voltar para Comprar", callback_data='menu_comprar')])
     
     await update.callback_query.edit_message_text(text=text, reply_markup=InlineKeyboardMarkup(keyboard), parse_mode='Markdown')
-
-async def buy_login(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    query = update.callback_query
-    loja = query.data.split('_')[2]
-    
-    user_id = query.from_user.id
-    if user_id not in user_history: user_history[user_id] = []
-    user_history[user_id].append({
-        'produto': 'Login Premium',
-        'item': loja,
-        'preco': 'Consultar no Comprar',
-        'id': loja
-    })
-    
-    text = f"✅ **PEDIDO CONFIRMADO!**\n\nVocê selecionou o login da **{loja}**.\n👉 Pague via Telegram Wallet e Bruno liberará o acesso."
-    
-    keyboard = [
-        [InlineKeyboardButton("💰 Ver Pagamento", callback_data='menu_pagamento')],
-        [InlineKeyboardButton("🔙 Menu Principal", callback_data='menu_principal')]
-    ]
-    
-    await query.edit_message_text(text=text, reply_markup=InlineKeyboardMarkup(keyboard), parse_mode='Markdown')
-
-# --- PAGAMENTO ---
 
 async def show_pagamento(update: Update, context: ContextTypes.DEFAULT_TYPE):
     text = f"💰 **PAGAMENTO VIA TELEGRAM WALLET**\n\n"
@@ -310,6 +215,45 @@ async def pedir_para_bruno(update: Update, context: ContextTypes.DEFAULT_TYPE):
     keyboard = [[InlineKeyboardButton("🔙 Voltar ao Menu", callback_data='menu_principal')]]
     await update.callback_query.edit_message_text(text=text, reply_markup=InlineKeyboardMarkup(keyboard))
 
+# --- HANDLERS DE COMPRA (ADICIONA AO HISTÓRICO E VAI PARA PAGAMENTO) ---
+
+async def buy_item(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    query = update.callback_query
+    cat = query.data.split('_')[1]
+    item_id = int(query.data.split('_')[2])
+    
+    p = produtos[cat]
+    item = next((i for i in p['itens'] if i['id'] == item_id), None)
+    
+    if item:
+        # Adiciona ao histórico
+        user_id = query.from_user.id
+        if user_id not in user_history: user_history[user_id] = []
+        user_history[user_id].append({
+            'produto': p['titulo'],
+            'item': item['saldo'],
+            'preco': item['preco'],
+            'id': item['id']
+        })
+        
+        # Vai direto para o pagamento
+        await show_pagamento(update, context)
+
+async def buy_login(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    query = update.callback_query
+    loja = query.data.split('_')[2]
+    
+    user_id = query.from_user.id
+    if user_id not in user_history: user_history[user_id] = []
+    user_history[user_id].append({
+        'produto': 'Login Premium',
+        'item': loja,
+        'preco': 'Consultar no Comprar',
+        'id': loja
+    })
+    
+    # Vai direto para o pagamento
+    await show_pagamento(update, context)
 
 # --- HANDLERS GERAIS ---
 
@@ -339,21 +283,17 @@ async def button(update: Update, context: ContextTypes.DEFAULT_TYPE):
     elif data == 'menu_suporte':
         await menu_suporte(update, context)
     
-    # PRODUTOS (CATEGORIAS)
+    # CATEGORIAS DE PRODUTOS
     elif data == 'menu_cat_itaum':
-        await show_cat_produtos(update, context)
+        await show_cat_produtos(update, context, 'itaum')
     elif data == 'menu_cat_porto':
-        await show_cat_produtos(update, context)
+        await show_cat_produtos(update, context, 'porto')
     elif data == 'menu_cat_lara':
-        await show_cat_produtos(update, context)
+        await show_cat_produtos(update, context, 'lara')
     elif data == 'menu_cat_logins':
         await show_logins_list(update, context)
     
-    # PRODUTOS (PÁGINAS)
-    elif data.startswith('page_'):
-        await show_prod_item(update, context)
-    
-    # COMPRAR ITENS
+    # COMPRAR PRODUTOS (Vai direto para pagamento)
     elif data.startswith('buy_'):
         await buy_item(update, context)
     
