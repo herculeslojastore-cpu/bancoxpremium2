@@ -93,13 +93,23 @@ async def main_menu(update: Update, context: ContextTypes.DEFAULT_TYPE):
         [InlineKeyboardButton("👤 Suporte VIP (Bruno)", callback_data='menu_suporte')]
     ]
     reply_markup = InlineKeyboardMarkup(keyboard)
-    await update.callback_query.edit_message_text(
-        "🏦 **BANCO X PREMIUM**\n"
-        "Estoque exclusivo e acesso direto ao sistema. Selecione uma opção:",
-        reply_markup=reply_markup,
-        parse_mode='Markdown'
-    )
-
+    
+    # Ajuste aqui: Se for /start (mensagem normal), usa reply_text. Se for botão, usa edit_message_text.
+    if update.message:
+        await update.message.reply_text(
+            "🏦 **BANCO X PREMIUM**\n"
+            "Estoque exclusivo e acesso direto ao sistema. Selecione uma opção:",
+            reply_markup=reply_markup,
+            parse_mode='Markdown'
+        )
+    elif update.callback_query:
+        await update.callback_query.edit_message_text(
+            "🏦 **BANCO X PREMIUM**\n"
+            "Estoque exclusivo e acesso direto ao sistema. Selecione uma opção:",
+            reply_markup=reply_markup,
+            parse_mode='Markdown'
+        )
+        
 async def menu_comprar(update: Update, context: ContextTypes.DEFAULT_TYPE):
     keyboard = [
         [InlineKeyboardButton("🏦 Itaú (10 vagas)", callback_data='menu_cat_itaum')],
