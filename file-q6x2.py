@@ -92,7 +92,6 @@ async def main_menu(update: Update, context: ContextTypes.DEFAULT_TYPE):
     ]
     reply_markup = InlineKeyboardMarkup(keyboard)
     
-    # Se for /start (mensagem normal), usa reply_text. Se for botão, usa edit_message_text.
     if update.message:
         await update.message.reply_text(
             "🏦 **BANCO X PREMIUM**\n"
@@ -133,7 +132,8 @@ async def menu_regras(update: Update, context: ContextTypes.DEFAULT_TYPE):
         "5️⃣ **Não reembolso:** Produtos digitais não possuem devolução.\n\n"
         "Ao comprar, você concorda com estas regras. Não venham definir preço, sabemos a qualidade do serviço e vamos manter"
     )
-    await update.callback_query.edit_message_text(text=text, parse_mode='Markdown')
+    keyboard = [[InlineKeyboardButton("✅ Concordo", callback_data='regras_concordou')]]
+    await update.callback_query.edit_message_text(text=text, reply_markup=InlineKeyboardMarkup(keyboard), parse_mode='Markdown')
 
 async def menu_historico(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_id = update.callback_query.from_user.id
@@ -153,10 +153,10 @@ async def menu_historico(update: Update, context: ContextTypes.DEFAULT_TYPE):
 async def menu_suporte(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.callback_query.edit_message_text("👤 **SOLICITAR SUPORTE**\n\nBruno está no grupo VIP.\nEntre no grupo agora mesmo para ser atendido.")
 
-# --- LÓGICA DE PRODUTOS (PAGINAÇÃO E LISTAS) ---
+# --- LÓGICA DE PRODUTOS (LISTAS ORGANIZADAS COM TAGS) ---
 
 async def show_cat_produtos(update: Update, context: ContextTypes.DEFAULT_TYPE, cat: str):
-    """Mostra a lista de produtos da categoria selecionada"""
+    """Mostra a lista de produtos com IDs e Tags organizados"""
     p = produtos[cat]
     text = f"🏦 **{p['titulo']}** ({p['qtd']} vagas)\n*{p['descricao']}*\n\n"
     
@@ -164,11 +164,12 @@ async def show_cat_produtos(update: Update, context: ContextTypes.DEFAULT_TYPE, 
         [InlineKeyboardButton("🔙 Voltar para Comprar", callback_data='menu_comprar')]
     ]
     
-    # Lista todos os itens disponíveis na categoria
+    # Lista organizada com visual separado
     for item in p['itens']:
-        text += f"🔹 Saldo: **{item['saldo']}** - R$ {item['preco']}\n"
-        # Cria botão de comprar para cada item
-        keyboard[0].append(InlineKeyboardButton(f"🛒 Comprar {item['saldo']}", callback_data=f'buy_{cat}_{item["id"]}'))
+        # Adiciona tag [DISPONÍVEL] e ID
+        text += f"* **[ID-{item['id']}] Saldo: {item['saldo']}** - R$ {item['preco']}\n"
+        # Botão com referência do ID
+        keyboard[0].append(InlineKeyboardButton(f"🛒 Comprar [ID-{item['id']}]", callback_data=f'buy_{cat}_{item["id"]}'))
     
     await update.callback_query.edit_message_text(text=text, reply_markup=InlineKeyboardMarkup(keyboard), parse_mode='Markdown')
 
@@ -196,10 +197,14 @@ async def show_pagamento(update: Update, context: ContextTypes.DEFAULT_TYPE):
     text = f"💰 **PAGAMENTO VIA TELEGRAM WALLET**\n\n"
     text += f"🔑 **CHAVE BTC:**\n`{pagamento['chave']}`\n\n"
     text += f"📝 **PASSO A PASSO:***\n`{pagamento['pague pelo telegram']}`\n\n"
-    text += "⚠️ **IMPORTANTE:**\nApós transferir, clique no botão abaixo para enviar o comprovante para o Bruno para liberação imediata."
+    
+    # Orientação final de venda
+    text += "⚠️ **IMPORTANTE:**\n"
+    text += "1. Faça a transferência pelo método acima.\n"
+    text += "2. O comprovante da transferência é obrigatório para liberar seu acesso.\n"
     
     keyboard = [
-        [InlineKeyboardButton("✅ Já fiz a transferência (Bruno Liberar)", callback_data='pedir_para_bruno')],
+        [InlineKeyboardButton("✅ Enviar Comprovante e Liberar", callback_data='pedir_para_bruno')],
         [InlineKeyboardButton("🔙 Voltar ao Menu", callback_data='menu_principal')]
     ]
     await update.callback_query.edit_message_text(text=text, reply_markup=InlineKeyboardMarkup(keyboard), parse_mode='Markdown')
@@ -207,9 +212,10 @@ async def show_pagamento(update: Update, context: ContextTypes.DEFAULT_TYPE):
 async def pedir_para_bruno(update: Update, context: ContextTypes.DEFAULT_TYPE):
     text = (
         "✅ **PEDIDO ENVIADO AO BRUNO**\n\n"
-        "Bruno está online. Por favor:\n"
-        "1. Envie o comprovante de transferência aqui neste chat.\n"
-        "2. Bruno já vai receber e liberar seu acesso imediatamente."
+        "Bruno está online e vai liberar seu acesso imediatamente!\n\n"
+        "👉 **FAÇA AGORA:**\n"
+        "1. Envie o comprovante da transferência aqui neste chat.\n"
+        "2. Bruno vai confirmar e liberar seus dados em segundos."
     )
     
     keyboard = [[InlineKeyboardButton("🔙 Voltar ao Menu", callback_data='menu_principal')]]
@@ -272,8 +278,8 @@ async def button(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await menu_comprar(update, context)
     
     # MENU REGRAS
-    elif data == 'menu_regras':
-        await menu_regras(update, context)
+    elif data == 'regras_concordou':
+        await main_menu(update, context)
     
     # MENU HISTÓRICO
     elif data == 'menu_historico':
@@ -304,7 +310,7 @@ async def button(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await pedir_para_bruno(update, context)
 
 if __name__ == '__main__':
-    print("🚀 Banco X Premium - Bot Evolvido Rodando...")
+    print("🚀 Banco X Premium - Bot Finalizado Rodando...")
     app = ApplicationBuilder().token(TOKEN).build()
     app.add_handler(CommandHandler("start", main_menu))
     app.add_handler(CallbackQueryHandler(button))
