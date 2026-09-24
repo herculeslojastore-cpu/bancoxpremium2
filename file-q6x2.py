@@ -32,7 +32,7 @@ produtos = {
     },
     "porto": {
         "titulo": "Porto Consultado",
-        "descricao": "Saldo garantido (Consultado no telefone).",
+        "descricao": "Garantia de saldo.",
         "qtd": 7,
         "itens": [
             {"saldo": "R$ 6.025,00", "preco": "R$ 350,00", "id": 1},
@@ -119,15 +119,15 @@ async def main_menu(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 async def menu_comprar(update: Update, context: ContextTypes.DEFAULT_TYPE):
     keyboard = [
-        [InlineKeyboardButton("🏦 Itaú", callback_data='menu_cat_itaum')],
-        [InlineKeyboardButton("💳 Porto", callback_data='menu_cat_porto')],
-        [InlineKeyboardButton("💰 Lara", callback_data='menu_cat_lara')],
+        [InlineKeyboardButton("🏦 Consultavel Itaú", callback_data='menu_cat_itaum')],
+        [InlineKeyboardButton("💳 Consultada Porto", callback_data='menu_cat_porto')],
+        [InlineKeyboardButton("💰 Contas Lara MP", callback_data='menu_cat_lara')],
         [InlineKeyboardButton("🔐 Logins Premium", callback_data='menu_cat_logins')],
         [InlineKeyboardButton("🔙 Voltar ao Menu", callback_data='menu_principal')]
     ]
     reply_markup = InlineKeyboardMarkup(keyboard)
     await update.callback_query.edit_message_text(
-        "🛒 **COMPRAR**\n\nEscolha a categoria de produto:",
+        "🛒 **ESCOLHA O SEU PRODUTO**\n\nComprando um cartão + lara e/ou login, te auxiliamos na aprovação! Bora virar um saldo ou comprar aquele produto?:",
         reply_markup=reply_markup,
         parse_mode='Markdown'
     )
@@ -150,7 +150,7 @@ async def menu_historico(update: Update, context: ContextTypes.DEFAULT_TYPE):
     history = user_history.get(user_id, [])
     
     if not history:
-        text = "📜 **SEU HISTÓRICO**\n\nVocê ainda não fez nenhuma compra no Banco X Premium."
+        text = "📜 **SEU HISTÓRICO**\n\nDevagar demais, você ainda não fez nenhuma compra no conosco."
     else:
         text = f"📜 **SEU HISTÓRICO DE COMPRAS**\n\n"
         for item in history:
@@ -169,7 +169,7 @@ async def show_cat_produtos(update: Update, context: ContextTypes.DEFAULT_TYPE, 
     """Mostra os produtos como cards individuais para melhor visualização"""
     p = produtos[cat]
     
-    text = f"🏦 **{p['titulo']}**\n*{p['qtd']} vagas disponíveis*\n\n"
+    text = f"🏦 **{p['titulo']}**\n*{p['qtd']} unidades disponíveis*\n\n"
     text += f"📌 *{p['descricao']}*\n\n"
     text += "💎 **SELECIONE UM CARTÃO:**\n\n"
     
@@ -198,7 +198,7 @@ async def show_cat_produtos(update: Update, context: ContextTypes.DEFAULT_TYPE, 
     )
 
 async def show_logins_list(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    text = "🔐 **LOGINS PREMIUM (50 Vagas)**\n*Escolha a loja que você quer comprar*\n\n"
+    text = "🔐 **LOGINS PREMIUM**\n*Escolha a loja que você quer aprovar*\n\n"
     
     keyboard = []
     row = []
