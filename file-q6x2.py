@@ -178,7 +178,7 @@ async def show_cat_produtos(update: Update, context: ContextTypes.DEFAULT_TYPE, 
             f"✅ Disponível: Sim"
         )
         
-        # Adiciona o botão individual para cada item
+        # Adiciona um botão individual para cada item
         keyboard.append([InlineKeyboardButton(f"🛒 Comprar [ID-{item['id']}] - {item['saldo']}", callback_data=f'buy_{cat}_{item["id"]}'])])
     
     # Adiciona botão de voltar no final
