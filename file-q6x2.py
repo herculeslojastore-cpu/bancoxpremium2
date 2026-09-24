@@ -94,6 +94,7 @@ async def main_menu(update: Update, context: ContextTypes.DEFAULT_TYPE):
         [InlineKeyboardButton("📜 Histórico de Compras", callback_data='menu_historico')],
         [InlineKeyboardButton("📋 Regras e Políticas", callback_data='menu_regras')],
         [InlineKeyboardButton("🛒 Comprar Agora", callback_data='menu_comprar')],
+        [InlineKeyboardButton("📌 Referências", url="URL_DO_SEU_CANAL_AQUI")], # ATUALIZE AQUI
         [InlineKeyboardButton("👤 Suporte VIP (Bruno)", callback_data='menu_suporte')]
     ]
     reply_markup = InlineKeyboardMarkup(keyboard)
@@ -119,7 +120,7 @@ async def main_menu(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 async def menu_comprar(update: Update, context: ContextTypes.DEFAULT_TYPE):
     keyboard = [
-        [InlineKeyboardButton("🏦 Consultavel Itaú", callback_data='menu_cat_itaum')],
+        [InlineKeyboardButton("🏦 Consultável Itaú", callback_data='menu_cat_itaum')],
         [InlineKeyboardButton("💳 Consultada Porto", callback_data='menu_cat_porto')],
         [InlineKeyboardButton("💰 Contas Lara MP", callback_data='menu_cat_lara')],
         [InlineKeyboardButton("🔐 Logins Premium", callback_data='menu_cat_logins')],
@@ -140,9 +141,9 @@ async def menu_regras(update: Update, context: ContextTypes.DEFAULT_TYPE):
         "3️⃣ **Entrega:** Os dados são enviados via Telegram imediatamente após a confirmação do pagamento.\n"
         "4️⃣ **Suporte:** Bruno está disponível 24/7 no grupo VIP.\n"
         "5️⃣ **Não reembolso:** Produtos digitais não possuem devolução.\n\n"
-        "Ao comprar, você concorda com estas regras. Não venham definir preço, sabemos a qualidade do serviço e vamos manter"
+        "Ao comprar, você concorda com estas regras."
     )
-    keyboard = [[InlineKeyboardButton("✅ Concordo", callback_data='regras_concordou')]]
+    keyboard = [[InlineKeyboardButton("🔙 Voltar ao Menu", callback_data='menu_principal')]]
     await update.callback_query.edit_message_text(text=text, reply_markup=InlineKeyboardMarkup(keyboard), parse_mode='Markdown')
 
 async def menu_historico(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -161,7 +162,9 @@ async def menu_historico(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.callback_query.edit_message_text(text=text, reply_markup=InlineKeyboardMarkup(keyboard), parse_mode='Markdown')
 
 async def menu_suporte(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    await update.callback_query.edit_message_text("👤 **SOLICITAR SUPORTE**\n\nBruno está no grupo VIP.\nEntre no grupo agora mesmo para ser atendido.")
+    # Redireciona direto para o chat do Bruno
+    keyboard = [[InlineKeyboardButton("Abrir Chat do Bruno", url="https://t.me/suportex")]]
+    await update.callback_query.edit_message_text("Abrindo chat...", reply_markup=InlineKeyboardMarkup(keyboard))
 
 # --- LÓGICA DE PRODUTOS (CARDS INDIVIDUAIS) ---
 
@@ -176,26 +179,46 @@ async def show_cat_produtos(update: Update, context: ContextTypes.DEFAULT_TYPE, 
     keyboard = []
     
     for item in p['itens']:
-        # Cria um card individual para cada cartão
-        item_text = (
-            f"🔹 **Cartão [ID-{item['id']}]**\n"
-            f"💰 Saldo: {item['saldo']}\n"
-            f"💸 Preço: R$ {item['preco']}\n"
-            f"✅ Disponível: Sim"
-        )
+        # Texto limpo sem ID
+        text += f"🔹 **Cartão**\n"
+        text += f"💰 Saldo: {item['saldo']}\n"
+        text += f"💸 Preço: R$ {item['preco']}\n\n"
         
-        # Adiciona um botão individual para cada item
-        keyboard.append([InlineKeyboardButton(f"🛒 Comprar [ID-{item['id']}] - {item['saldo']}", callback_data=f"buy_{cat}_{item['id']}")])
+        # Botão individual para confirmação
+        keyboard.append([InlineKeyboardButton(f"🛒 Comprar {item['saldo']}", callback_data=f"confirm_{cat}_{item['id']}")])
         
     # Adiciona botão de voltar no final
     keyboard.append([InlineKeyboardButton("🔙 Voltar para Comprar", callback_data='menu_comprar')])
     
-    # Envia a mensagem com a lista e os botões
     await update.callback_query.edit_message_text(
         text=text,
         reply_markup=InlineKeyboardMarkup(keyboard),
         parse_mode='Markdown'
     )
+
+async def confirm_buy_item(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    query = update.callback_query
+    cat = query.data.split('_')[1]
+    item_id = int(query.data.split('_')[2])
+    
+    p = produtos[cat]
+    item = next((i for i in p['itens'] if i['id'] == item_id), None)
+    
+    if item:
+        text = (
+            f"⚠️ **CONFIRMAÇÃO DE COMPRA**\n\n"
+            f"Você vai comprar:\n"
+            f"🏦 {p['titulo']}\n"
+            f"💰 Saldo: {item['saldo']}\n"
+            f"💸 Preço: R$ {item['preco']}\n\n"
+            f"Isso é definitivo?"
+        )
+        
+        keyboard = [
+            [InlineKeyboardButton("✅ Confirmar Compra", callback_data=f"buy_{cat}_{item['id']}")],
+            [InlineKeyboardButton("❌ Cancelar", callback_data='menu_comprar')]
+        ]
+        await query.edit_message_text(text=text, reply_markup=InlineKeyboardMarkup(keyboard), parse_mode='Markdown')
 
 async def show_logins_list(update: Update, context: ContextTypes.DEFAULT_TYPE):
     text = "🔐 **LOGINS PREMIUM**\n*Escolha a loja que você quer aprovar*\n\n"
@@ -205,7 +228,7 @@ async def show_logins_list(update: Update, context: ContextTypes.DEFAULT_TYPE):
     
     for cat, lojas in logins.items():
         for loja in lojas:
-            row.append(InlineKeyboardButton(f"🔹 {loja}", callback_data=f'buy_login_{loja}'))
+            row.append(InlineKeyboardButton(f"🔹 {loja}", callback_data=f'confirm_login_{loja}'))
             
             if len(row) == 3:
                 keyboard.append(row)
@@ -216,6 +239,23 @@ async def show_logins_list(update: Update, context: ContextTypes.DEFAULT_TYPE):
     keyboard.append([InlineKeyboardButton("🔙 Voltar para Comprar", callback_data='menu_comprar')])
     
     await update.callback_query.edit_message_text(text=text, reply_markup=InlineKeyboardMarkup(keyboard), parse_mode='Markdown')
+
+async def confirm_buy_login(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    query = update.callback_query
+    loja = query.data.split('_')[2]
+    
+    text = (
+        f"⚠️ **CONFIRMAÇÃO DE COMPRA**\n\n"
+        f"Você vai comprar:\n"
+        f"🔐 Login da **{loja}**\n\n"
+        f"Isso é definitivo?"
+    )
+    
+    keyboard = [
+        [InlineKeyboardButton("✅ Confirmar Compra", callback_data=f"buy_login_{loja}")],
+        [InlineKeyboardButton("❌ Cancelar", callback_data='menu_comprar')]
+    ]
+    await query.edit_message_text(text=text, reply_markup=InlineKeyboardMarkup(keyboard), parse_mode='Markdown')
 
 async def show_pagamento(update: Update, context: ContextTypes.DEFAULT_TYPE):
     text = f"💰 **PAGAMENTO VIA TELEGRAM WALLET**\n\n"
@@ -233,18 +273,11 @@ async def show_pagamento(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.callback_query.edit_message_text(text=text, reply_markup=InlineKeyboardMarkup(keyboard), parse_mode='Markdown')
 
 async def pedir_para_bruno(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    text = (
-        "✅ **PEDIDO ENVIADO AO BRUNO**\n\n"
-        "Bruno está online e vai liberar seu acesso imediatamente!\n\n"
-        "👉 **FAÇA AGORA:**\n"
-        "1. Envie o comprovante da transferência aqui neste chat.\n"
-        "2. Bruno vai confirmar e liberar seus dados em segundos."
-    )
-    
-    keyboard = [[InlineKeyboardButton("🔙 Voltar ao Menu", callback_data='menu_principal')]]
-    await update.callback_query.edit_message_text(text=text, reply_markup=InlineKeyboardMarkup(keyboard))
+    # Redireciona direto para o chat do Bruno
+    keyboard = [[InlineKeyboardButton("Abrir Chat do Bruno", url="https://t.me/suportex")]]
+    await update.callback_query.edit_message_text("Abrindo chat...", reply_markup=InlineKeyboardMarkup(keyboard))
 
-# --- HANDLERS DE COMPRA ---
+# --- HANDLERS DE COMPRA (ADICIONA AO HISTÓRICO E VAI PARA PAGAMENTO) ---
 
 async def buy_item(update: Update, context: ContextTypes.DEFAULT_TYPE):
     query = update.callback_query
@@ -255,6 +288,7 @@ async def buy_item(update: Update, context: ContextTypes.DEFAULT_TYPE):
     item = next((i for i in p['itens'] if i['id'] == item_id), None)
     
     if item:
+        # Adiciona ao histórico
         user_id = query.from_user.id
         if user_id not in user_history: user_history[user_id] = []
         user_history[user_id].append({
@@ -264,6 +298,7 @@ async def buy_item(update: Update, context: ContextTypes.DEFAULT_TYPE):
             'id': item['id']
         })
         
+        # Vai direto para o pagamento
         await show_pagamento(update, context)
 
 async def buy_login(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -279,6 +314,7 @@ async def buy_login(update: Update, context: ContextTypes.DEFAULT_TYPE):
         'id': loja
     })
     
+    # Vai direto para o pagamento
     await show_pagamento(update, context)
 
 # --- HANDLERS GERAIS ---
@@ -293,8 +329,7 @@ async def button(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await main_menu(update, context)
     elif data == 'menu_comprar':
         await menu_comprar(update, context)
-    elif data == 'regras_concordou':
-        await main_menu(update, context)
+    # Remove regras_concordou pois o botão foi removido
     elif data == 'menu_historico':
         await menu_historico(update, context)
     elif data == 'menu_suporte':
@@ -307,6 +342,11 @@ async def button(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await show_cat_produtos(update, context, 'lara')
     elif data == 'menu_cat_logins':
         await show_logins_list(update, context)
+    # Novos handlers de confirmação
+    elif data.startswith('confirm_'):
+        await confirm_buy_item(update, context)
+    elif data.startswith('confirm_login_'):
+        await confirm_buy_login(update, context)
     elif data.startswith('buy_'):
         await buy_item(update, context)
     elif data == 'menu_pagamento':
